@@ -40,11 +40,8 @@ class StateMachineTests: XCTestCase {
         var passed = false
         
         self.stateMachine.addState(StateEnum.Initial, onEnter: { (from, to, current) -> Void in
-            println("Enter: Initial State")
             passed = true
-        }) { (from, to, current) -> Void in
-            println("Exit: Initial State")
-        }
+        })
         
         self.stateMachine.setInitialState(StateEnum.Initial)
         

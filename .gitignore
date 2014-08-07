@@ -1,0 +1,11 @@
+build
+*.mode1v3
+*.pbxuser     
+*.xcuserdatad
+*.xcuserstate
+
+# generated
+
+# osx noise
+.DS_Store
+.profile

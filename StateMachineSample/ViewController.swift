@@ -19,9 +19,9 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        let stateMachine = StateMachine<StatesEnum>()
-        stateMachine.addState(StatesEnum.FinalState,
-            fromStates:[StatesEnum.InitialState, StatesEnum.FinalState])
+//        let stateMachine = StateMachine<StatesEnum>()
+//        stateMachine.addState(StatesEnum.FinalState,
+//            fromStates:[StatesEnum.InitialState, StatesEnum.FinalState])
     }
 
     override func didReceiveMemoryWarning() {

@@ -25,7 +25,7 @@ class StateMachine <T> where T:Hashable {
         
     }
     
-    func setInitialState(state:T){
+    func setInitial(state:T){
         let modelState:State<T>? = self.states[state]
         
         assert(self.currentState == nil, "Initial state already setted")
@@ -43,7 +43,7 @@ class StateMachine <T> where T:Hashable {
         self.onStateChangeSucceeded?(nil, state, self.currentState!.value)
     }
     
-    func canChangeState(state:T)->Bool{
+    func canMove(to state:T)->Bool{
         assert(states[state] != nil, "State not registered")
         
         if let modelState = states[state]{
@@ -58,7 +58,7 @@ class StateMachine <T> where T:Hashable {
         return false
     }
     
-    func addState(state:T, fromStates:[T]? = nil, parent:T? = nil,
+    func add(state:T, fromStates:[T]? = nil, parent:T? = nil,
         onEnter:StateChangeHandler? = nil, onExit:StateChangeHandler? = nil){
         let fromStatesList = fromStates ?? [T]()
         
@@ -73,7 +73,7 @@ class StateMachine <T> where T:Hashable {
         states[state] = stateModel
     }
     
-    func gotoState(state:T){
+    func move(to state:T){
         
         assert(states[state] != nil, "State not registered")
         
@@ -102,7 +102,7 @@ class StateMachine <T> where T:Hashable {
         
         if let toState = states[state] {
             
-            if (!canChangeState(state: state)) {
+            if (!canMove(to: state)) {
                 self.onStateChangeFailed?(fromValue, state, fromValue)
                 return
             }

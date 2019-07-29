@@ -10,7 +10,8 @@ import UIKit
 import XCTest
 
 
-enum StateEnum:Printable {
+enum StateEnum: CustomStringConvertible {
+    
     case Initial
     case Open
     case OpenHalf
@@ -21,9 +22,9 @@ enum StateEnum:Printable {
     
     var description:String {
         switch self {
-        case Initial:
+        case .Initial:
             return "Initial"
-        case OpenHalf:
+        case .OpenHalf:
             return "Open"
         default:
             return "Lala"
@@ -49,11 +50,11 @@ class StateMachineTests: XCTestCase {
     func testSetInitialState() {
         var passed = false
         
-        stateMachine.addState(StateEnum.Initial, onEnter: { (from, to, current) -> Void in
+        stateMachine.addState(state: StateEnum.Initial, onEnter: { (from, to, current) -> Void in
             passed = true
         })
         
-        stateMachine.setInitialState(StateEnum.Initial)
+        stateMachine.setInitialState(state: StateEnum.Initial)
         
         XCTAssertEqual(self.stateMachine.state, StateEnum.Initial, "State Not Initialized properly")
         XCTAssert(passed, "onEnter callback not called")
@@ -64,33 +65,33 @@ class StateMachineTests: XCTestCase {
         var passedOnExit = false
         var passedOnTransaction = false
         
-        stateMachine.addState(StateEnum.Initial, onExit: { (from, to, current) -> Void in
+        stateMachine.addState(state: StateEnum.Initial, onExit: { (from, to, current) -> Void in
             passedOnExit = true
         })
-        stateMachine.addState(StateEnum.Open, fromStates: [StateEnum.Initial],
+        stateMachine.addState(state: StateEnum.Open, fromStates: [StateEnum.Initial],
             onEnter: { (from, to, current) -> Void in
             passedOnEnter = true
         })
         
-        stateMachine.setInitialState(StateEnum.Initial)
+        stateMachine.setInitialState(state: StateEnum.Initial)
         
         stateMachine.onStateChangeSucceeded = { (from, to, current) -> Void in
             passedOnTransaction = true
         }
         
-        stateMachine.gotoState(StateEnum.Open)
+        stateMachine.gotoState(state: StateEnum.Open)
         
         XCTAssert(passedOnEnter && passedOnExit && passedOnTransaction, "State transaction Didn't worked")
     }
     
     func testCanChangeToState() {
-        stateMachine.addState(StateEnum.Initial)
-        stateMachine.addState(StateEnum.Open, fromStates:[StateEnum.Initial])
-        stateMachine.addState(StateEnum.Close)
-        stateMachine.setInitialState(StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Open, fromStates:[StateEnum.Initial])
+        stateMachine.addState(state: StateEnum.Close)
+        stateMachine.setInitialState(state: StateEnum.Initial)
         
-        XCTAssert(stateMachine.canChangeState(StateEnum.Open), "State change validation failed")
-        XCTAssert(!stateMachine.canChangeState(StateEnum.Close), "State change validation failed")
+        XCTAssert(stateMachine.canChangeState(state: StateEnum.Open), "State change validation failed")
+        XCTAssert(!stateMachine.canChangeState(state: StateEnum.Close), "State change validation failed")
     }
     
     func testParentState() {
@@ -99,25 +100,25 @@ class StateMachineTests: XCTestCase {
         var checkpoint2 = false
         var checkpoint3 = false
         
-        let onEnterOpenState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenState:(_ from:StateEnum?, _ to:StateEnum, _ current:StateEnum)->Void = {(from, to, current) in
             checkpoint1 = true
         }
         
-        let onEnterOpenCompletelyState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenCompletelyState:(StateEnum?, StateEnum, StateEnum)->Void = {(from, to, current) in
             checkpoint2 = true
         }
         
-        let onEnterOpenHalfState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenHalfState:(StateEnum?, StateEnum, StateEnum)->Void = {(from, to, current) in
             checkpoint3 = true
         }
         
-        stateMachine.addState(StateEnum.Initial)
-        stateMachine.addState(StateEnum.Open, onEnter:onEnterOpenState)
-        stateMachine.addState(StateEnum.OpenCompletely, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenCompletelyState)
-        stateMachine.addState(StateEnum.OpenHalf, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenHalfState)
-        stateMachine.setInitialState(StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Open, onEnter:onEnterOpenState)
+        stateMachine.addState(state: StateEnum.OpenCompletely, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenCompletelyState)
+        stateMachine.addState(state: StateEnum.OpenHalf, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenHalfState)
+        stateMachine.setInitialState(state: StateEnum.Initial)
         
-        stateMachine.gotoState(StateEnum.OpenCompletely)
+        stateMachine.gotoState(state: StateEnum.OpenCompletely)
         
         XCTAssert(checkpoint1 && checkpoint2 && !checkpoint3, "Change of state with hierarchy failed")
     }
@@ -127,25 +128,25 @@ class StateMachineTests: XCTestCase {
         var checkpoint2 = false
         var checkpoint3 = false
         
-        let onEnterOpenState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenState:(StateEnum?, StateEnum, StateEnum)->Void = {(from, to, current) in
             checkpoint1 = true
         }
         
-        let onEnterOpenCompletelyState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenCompletelyState:(StateEnum?, StateEnum, StateEnum)->Void = {(from, to, current) in
             checkpoint2 = true
         }
         
-        let onEnterOpenHalfState:(from:StateEnum?, to:StateEnum, current:StateEnum)->Void = {(from, to, current) in
+        let onEnterOpenHalfState:(StateEnum?, StateEnum, StateEnum)->Void = {(from, to, current) in
             checkpoint3 = true
         }
         
-        stateMachine.addState(StateEnum.Initial)
-        stateMachine.addState(StateEnum.Open, fromStates:[StateEnum.Initial], onEnter:onEnterOpenState)
-        stateMachine.addState(StateEnum.OpenCompletely, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenCompletelyState)
-        stateMachine.addState(StateEnum.OpenHalf, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenHalfState)
-        stateMachine.setInitialState(StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Initial)
+        stateMachine.addState(state: StateEnum.Open, fromStates:[StateEnum.Initial], onEnter:onEnterOpenState)
+        stateMachine.addState(state: StateEnum.OpenCompletely, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenCompletelyState)
+        stateMachine.addState(state: StateEnum.OpenHalf, fromStates:[StateEnum.Initial], parent:StateEnum.Open, onEnter:onEnterOpenHalfState)
+        stateMachine.setInitialState(state: StateEnum.Initial)
         
-        stateMachine.gotoState(StateEnum.Open)
+        stateMachine.gotoState(state: StateEnum.Open)
         
         XCTAssert(checkpoint1 && !checkpoint2 && !checkpoint3, "Change of state with hierarchy failed")
     }

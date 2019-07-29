@@ -1,4 +1,4 @@
-   //
+//
 //  StateMachine.swift
 //  StateMachine
 //
@@ -8,9 +8,9 @@
 
 import Foundation
 
-class StateMachine <T where T:Hashable> {
+class StateMachine <T> where T:Hashable {
     
-    typealias StateChangeHandler = ((from:T?, to:T, current:T)->Void)
+    typealias StateChangeHandler = (_ from:T?, _ to:T, _ current:T) -> Void
     
     private var currentState:State<T>!
     private var states = [T:State<T>]()
@@ -35,12 +35,12 @@ class StateMachine <T where T:Hashable> {
         if (self.currentState.root != nil) {
             let parents = self.currentState.parents
             for parent in parents{
-                parent.onEnterHandler?(from: nil, to: state, current: parent.value)
+                parent.onEnterHandler?(nil, state, parent.value)
             }
         }
         
-        self.currentState.onEnterHandler?(from: nil, to: state, current: state)
-        self.onStateChangeSucceeded?(from: nil, to: state, current: self.currentState!.value)
+        self.currentState.onEnterHandler?(nil, state, state)
+        self.onStateChangeSucceeded?(nil, state, self.currentState!.value)
     }
     
     func canChangeState(state:T)->Bool{
@@ -50,7 +50,7 @@ class StateMachine <T where T:Hashable> {
             if !modelState.fromStates.isEmpty{
                 if let currentState = self.currentState {
                     let isCurrentState = (state == currentState.value)
-                    return !isCurrentState && contains(modelState.fromStates, currentState.value)
+                    return !isCurrentState && modelState.fromStates.contains(currentState.value)
                 }
             }
         }
@@ -60,14 +60,14 @@ class StateMachine <T where T:Hashable> {
     
     func addState(state:T, fromStates:[T]? = nil, parent:T? = nil,
         onEnter:StateChangeHandler? = nil, onExit:StateChangeHandler? = nil){
-        var fromStatesList = fromStates ?? [T]()
+        let fromStatesList = fromStates ?? [T]()
         
         let stateModel = State<T>(value:state, fromStates:fromStatesList)
         stateModel.onEnterHandler = onEnter
         stateModel.onExitHandler = onExit
         
-        if let strongParent = parent {
-            stateModel.parent = states[strongParent]
+        if let parent = parent {
+            stateModel.parent = states[parent]
         }
         
         states[state] = stateModel
@@ -88,10 +88,10 @@ class StateMachine <T where T:Hashable> {
                     if strongFromState.value == strongToState.value {
                         return (c, d)
                     }
-                    d++
+                    d += 1
                     toState = strongToState.parent
                 }
-                c++
+                c += 1
                 fromState = strongFromState.parent
             }
             
@@ -102,50 +102,48 @@ class StateMachine <T where T:Hashable> {
         
         if let toState = states[state] {
             
-            if (!canChangeState(state)) {
-                self.onStateChangeFailed?(from: fromValue, to: state, current: fromValue)
+            if (!canChangeState(state: state)) {
+                self.onStateChangeFailed?(fromValue, state, fromValue)
                 return
             }
             
-            let (a, b) = findPathToState(self.currentState.value, state)
+            let (a, b) = findPathToState(from: self.currentState.value, to: state)
             
             if (a > 0) {
-                self.currentState.onExitHandler?(from: fromValue, to: state, current: fromValue)
+                self.currentState.onExitHandler?(fromValue, state, fromValue)
                 
-                var parentState = self.currentState
+                var parentState: State<T>! = self.currentState
                 for _ in 0..<a-1 {
                     parentState = parentState.parent
-                    self.currentState.onExitHandler?(from: fromValue, to: state, current: parentState.value)
+                    self.currentState.onExitHandler?(fromValue, state, parentState.value)
                 }
             }
             
-            let oldState = self.currentState!
             self.currentState = toState
             
             if (b > 0){
                 if (toState.root != nil){
                     let parentStates = toState.parents
-                    var i = b-1
-                    while (i-- > 0) {
+                    (0..<b-1).reversed().forEach { i in
                         let parentState = parentStates[i]
-                        parentState.onEnterHandler?(from: fromValue, to: toState.value, current: parentState.value)
+                        parentState.onEnterHandler?(fromValue, toState.value, parentState.value)
                     }
                 }
                 
-                toState.onEnterHandler?(from: fromValue, to: toState.value, current: toState.value)
+                toState.onEnterHandler?(fromValue, toState.value, toState.value)
             }
             
-            self.onStateChangeSucceeded?(from: fromValue, to: toState.value, current: toState.value)
-            
+            self.onStateChangeSucceeded?(fromValue, toState.value, toState.value)
         }
     }
+    
 }
 
 // MARK: -
 
 private class State<T> {
     
-    typealias StateChangeHandler = (from:T?, to:T, current:T)->Void
+    typealias StateChangeHandler = (_ from:T?, _ to:T, _ current:T) -> Void
     
     weak var parent:State<T>? {
         didSet{
@@ -154,7 +152,7 @@ private class State<T> {
     }
     
     var root:State<T>? {
-        var parentState:State<T>? = self.parent
+        var parentState = self.parent
         while(parentState?.parent != nil){
             parentState = parentState?.parent
         }
